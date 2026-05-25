@@ -48,11 +48,15 @@ public abstract class AbstractIntegrationTest {
         );
     }
 
-    protected String registerAndGetToken(String email, String password, String fullName) {
+    protected AuthResponse register(String email, String password, String fullName) {
         RegisterRequest request = new RegisterRequest(email, password, fullName);
         AuthResponse response = restTemplate.postForObject("/api/v1/auth/register", request, AuthResponse.class);
         if (response == null) { throw new IllegalStateException("Registration failed for: " + email); }
-        return response.accessToken();
+        return response;
+    }
+
+    protected String registerAndGetToken(String email, String password, String fullName) {
+        return register(email, password, fullName).accessToken();
     }
 
     protected String uniqueEmail() {

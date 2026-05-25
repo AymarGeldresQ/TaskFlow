@@ -9,10 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -156,6 +158,58 @@ class TeamControllerIntegrationTest extends AbstractIntegrationTest {
             );
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /teams/{teamId}/members")
+    class GetTeamMembers {
+
+        @Test
+        void returnsAllMembersIncludingOwner() {
+            String slug = "get-members-team-" + UUID.randomUUID();
+            TeamResponse team = restTemplate.exchange(
+                BASE, HttpMethod.POST,
+                authRequest(new CreateTeamRequest("Get Members Team", slug), ownerToken),
+                TeamResponse.class
+            ).getBody();
+            assertThat(team).isNotNull();
+
+            String memberEmail = uniqueEmail();
+            dev.taskflow.application.dto.auth.AuthResponse memberAuth = register(memberEmail, "SecurePass123!", "Member One");
+            restTemplate.exchange(
+                BASE + "/" + team.id() + "/members", HttpMethod.POST,
+                authRequest(new AddMemberRequest(memberAuth.user().id(), TeamRole.MEMBER), ownerToken),
+                TeamMemberResponse.class
+            );
+
+            ResponseEntity<List<TeamMemberResponse>> response = restTemplate.exchange(
+                BASE + "/" + team.id() + "/members", HttpMethod.GET,
+                authRequest(ownerToken),
+                new ParameterizedTypeReference<List<TeamMemberResponse>>() {}
+            );
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().size()).isGreaterThanOrEqualTo(2);
+        }
+
+        @Test
+        void returns401WhenUnauthenticated() {
+            String slug = "unauth-members-team-" + UUID.randomUUID();
+            TeamResponse team = restTemplate.exchange(
+                BASE, HttpMethod.POST,
+                authRequest(new CreateTeamRequest("Unauth Team", slug), ownerToken),
+                TeamResponse.class
+            ).getBody();
+            assertThat(team).isNotNull();
+
+            ResponseEntity<Object> response = restTemplate.exchange(
+                BASE + "/" + team.id() + "/members", HttpMethod.GET,
+                null, Object.class
+            );
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         }
     }
 

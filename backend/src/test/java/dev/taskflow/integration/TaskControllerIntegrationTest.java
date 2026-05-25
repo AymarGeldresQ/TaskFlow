@@ -3,6 +3,7 @@ package dev.taskflow.integration;
 import dev.taskflow.application.dto.common.PageResponse;
 import dev.taskflow.application.dto.project.CreateProjectRequest;
 import dev.taskflow.application.dto.project.ProjectResponse;
+import dev.taskflow.application.dto.task.AssignTaskRequest;
 import dev.taskflow.application.dto.task.CreateTaskRequest;
 import dev.taskflow.application.dto.task.TaskResponse;
 import dev.taskflow.application.dto.task.TransitionTaskRequest;
@@ -243,6 +244,65 @@ class TaskControllerIntegrationTest extends AbstractIntegrationTest {
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody().title()).isEqualTo("Updated Title");
             assertThat(response.getBody().priority()).isEqualTo(TaskPriority.CRITICAL);
+        }
+    }
+
+    @Nested
+    @DisplayName("PATCH /tasks/{taskId}/assignee")
+    class AssignTask {
+
+        @Test
+        void assignsTaskToTeamMember() {
+            TaskResponse task = restTemplate.exchange(
+                "/api/v1/projects/" + projectId + "/tasks", HttpMethod.POST,
+                authRequest(new CreateTaskRequest("To Assign", null, null, null), ownerToken),
+                TaskResponse.class
+            ).getBody();
+            assertThat(task).isNotNull();
+
+            dev.taskflow.application.dto.auth.AuthResponse assigneeAuth =
+                register(uniqueEmail(), "SecurePass123!", "Assignee");
+
+            ResponseEntity<TaskResponse> response = restTemplate.exchange(
+                "/api/v1/tasks/" + task.id() + "/assignee", HttpMethod.PATCH,
+                authRequest(new AssignTaskRequest(assigneeAuth.user().id()), ownerToken),
+                TaskResponse.class
+            );
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().assigneeId()).isEqualTo(assigneeAuth.user().id());
+        }
+
+        @Test
+        void unassignsTaskWhenAssigneeIdIsNull() {
+            TaskResponse task = restTemplate.exchange(
+                "/api/v1/projects/" + projectId + "/tasks", HttpMethod.POST,
+                authRequest(new CreateTaskRequest("To Unassign", null, null, null), ownerToken),
+                TaskResponse.class
+            ).getBody();
+            assertThat(task).isNotNull();
+
+            ResponseEntity<TaskResponse> response = restTemplate.exchange(
+                "/api/v1/tasks/" + task.id() + "/assignee", HttpMethod.PATCH,
+                authRequest(new AssignTaskRequest(null), ownerToken),
+                TaskResponse.class
+            );
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().assigneeId()).isNull();
+        }
+
+        @Test
+        void returns404WhenTaskDoesNotExist() {
+            ResponseEntity<Object> response = restTemplate.exchange(
+                "/api/v1/tasks/" + UUID.randomUUID() + "/assignee", HttpMethod.PATCH,
+                authRequest(new AssignTaskRequest(null), ownerToken),
+                Object.class
+            );
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         }
     }
 
