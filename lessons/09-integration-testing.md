@@ -23,22 +23,22 @@ Testcontainers is a library that starts Docker containers in your test JVM:
 
 ```java
 // test/integration/AbstractIntegrationTest.java
-static final PostgreSQLContainer<?> postgres;
+static final PostgreSQLContainer<?> POSTGRES;
 
 static {
-    postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
         .withDatabaseName("taskflow_test")
         .withUsername("taskflow")
         .withPassword("taskflow_test");
-    postgres.start();  // starts a real Postgres 16 container
+    POSTGRES.start();  // starts a real Postgres 16 container
 }
 
 @DynamicPropertySource
 static void configureProperties(DynamicPropertyRegistry registry) {
     // Tell Spring to use the container's JDBC URL
-    registry.add("spring.datasource.url", postgres::getJdbcUrl);
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
+    registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+    registry.add("spring.datasource.username", POSTGRES::getUsername);
+    registry.add("spring.datasource.password", POSTGRES::getPassword);
 }
 ```
 
@@ -77,11 +77,11 @@ The bug manifested as "team tests get 401" but the actual cause was Postgres bei
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
 
-    static final PostgreSQLContainer<?> postgres;
+    static final PostgreSQLContainer<?> POSTGRES;
 
     static {  // runs once when the class is first loaded by the JVM
-        postgres = new PostgreSQLContainer<>("postgres:16-alpine")...;
-        postgres.start();
+        POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")...;
+        POSTGRES.start();
     }
     // ...
 }
@@ -175,3 +175,36 @@ class MyNewFeatureIntegrationTest extends AbstractIntegrationTest {
 ```
 
 `uniqueEmail()` generates a UUID-based email — ensures tests don't conflict even when running multiple test classes against the same shared database.
+
+## When You Need the User's ID (Not Just a Token)
+
+Some endpoints require the authenticated user's UUID — for example, assigning a task or adding a team member. `registerAndGetToken()` only returns the JWT string.
+
+Use `register()` instead — it returns the full `AuthResponse` which includes `user().id()`:
+
+```java
+// AbstractIntegrationTest.java
+protected AuthResponse register(String email, String password, String fullName) {
+    RegisterRequest request = new RegisterRequest(email, password, fullName);
+    AuthResponse response = restTemplate.postForObject("/api/v1/auth/register", request, AuthResponse.class);
+    if (response == null) { throw new IllegalStateException("Registration failed for: " + email); }
+    return response;
+}
+```
+
+Usage in a test:
+
+```java
+// test: assign a task to a specific user
+AuthResponse assigneeAuth = register(uniqueEmail(), "SecurePass123!", "Assignee");
+
+ResponseEntity<TaskResponse> response = restTemplate.exchange(
+    "/api/v1/tasks/" + task.id() + "/assignee", HttpMethod.PATCH,
+    authRequest(new AssignTaskRequest(assigneeAuth.user().id()), ownerToken),
+    TaskResponse.class
+);
+
+assertThat(response.getBody().assigneeId()).isEqualTo(assigneeAuth.user().id());
+```
+
+The alternative — calling `/api/v1/auth/login` after registration to extract the userId — works but adds an extra HTTP round-trip per test. The `register()` helper is cheaper and cleaner.
