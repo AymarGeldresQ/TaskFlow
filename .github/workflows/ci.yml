@@ -10,6 +10,7 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[ci]') || contains(github.event.head_commit.message, '[ci-backend]')
 
     services:
       postgres:
@@ -66,6 +67,7 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[ci]') || contains(github.event.head_commit.message, '[ci-frontend]')
 
     steps:
       - uses: actions/checkout@v4
