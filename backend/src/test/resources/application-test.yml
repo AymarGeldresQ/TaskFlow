@@ -1,0 +1,16 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
+  flyway:
+    validate-on-migrate: true
+
+jwt:
+  secret: test_secret_key_minimum_32_characters_long_required
+  access-expiration-ms: 3600000
+  refresh-expiration-ms: 86400000
+
+logging:
+  level:
+    root: WARN

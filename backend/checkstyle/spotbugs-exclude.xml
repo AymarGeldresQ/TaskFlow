@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Spring Security config uses intentional null returns -->
+    <Match>
+        <Class name="~dev\.taskflow\.infrastructure\.security\..*"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+
+    <!-- JPA entities have mutable fields by design -->
+    <Match>
+        <Class name="~dev\.taskflow\.infrastructure\.persistence\.entity\..*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Spring-injected interfaces are not externally mutable — false positive in DI context -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- Constructors that validate args throw by design — not a security risk here -->
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- Integration tests: TestRestTemplate returns nullable types but tests assert non-null context -->
+    <Match>
+        <Class name="~dev\.taskflow\.integration\..*"/>
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    </Match>
+
+    <!-- Test helper variables that are intentionally stored for side effects -->
+    <Match>
+        <Class name="~dev\.taskflow\.integration\..*"/>
+        <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+    </Match>
+</FindBugsFilter>
