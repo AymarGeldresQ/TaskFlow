@@ -18,6 +18,7 @@ Every lesson is grounded in THIS codebase. Real file paths, real decisions, real
 | [10](10-jwt-refresh-tokens.md) | JWT vs Opaque Refresh Tokens | Why is the access token a JWT but the refresh token a UUID? |
 | [11](11-observability-metrics-logging.md) | Observability: Metrics, Logging, Correlation IDs | Why does the gauge query the DB at scrape time, not per request? How does MDC propagate a correlation ID through every log line? |
 | [12](12-jacoco-coverage-enforcement.md) | JaCoCo Coverage Enforcement | Why did the first CI run fail with 36 violations? What's the difference between a coverage report and a coverage threshold? |
+| [13](13-frontend-architecture-decisions.md) | Frontend Architecture Decisions | How did we find the state machine bug before writing code? How does refresh single-flight work? Why access token in memory and refresh in localStorage? |
 
 ## How to read
 

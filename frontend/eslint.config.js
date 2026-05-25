@@ -5,14 +5,30 @@ const angular = require('@angular-eslint/eslint-plugin');
 const angularTemplate = require('@angular-eslint/eslint-plugin-template');
 const templateParser = require('@angular-eslint/template-parser');
 
+const FEATURES = ['auth', 'teams', 'projects', 'board', 'tasks', 'labels'];
+
+/**
+ * Builds cross-feature boundary patterns: files inside features/X must not import from features/Y (X !== Y).
+ */
+function crossFeaturePatterns(featureName) {
+  return FEATURES.filter((f) => f !== featureName).map((other) => ({
+    group: [`**/features/${other}/**`, `../../../features/${other}/**`, `../../features/${other}/**`, `../features/${other}/**`],
+    message: `Do not import from features/${other} inside features/${featureName}. Use shared core services or the router instead.`,
+  }));
+}
+
 module.exports = tseslint.config(
   eslint.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
+  // Scope strict type-checked rules to TS files only (HTML uses a different parser)
+  ...tseslint.configs.strictTypeChecked.map((config) => ({
+    ...config,
+    files: config.files ?? ['**/*.ts'],
+  })),
   {
     files: ['**/*.ts'],
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./tsconfig.app.json', './tsconfig.spec.json'],
       },
     },
     plugins: {
@@ -25,6 +41,8 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/prefer-readonly': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
+      // Angular Validators.required/email/etc. are static methods — unbound-method is a false positive here
+      '@typescript-eslint/unbound-method': ['error', { ignoreStatic: true }],
 
       // Angular
       '@angular-eslint/component-class-suffix': 'error',
@@ -42,6 +60,18 @@ module.exports = tseslint.config(
       eqeqeq: ['error', 'always'],
     },
   },
+  // Cross-feature boundary enforcement per feature
+  ...FEATURES.map((featureName) => ({
+    files: [`src/app/features/${featureName}/**/*.ts`],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: crossFeaturePatterns(featureName),
+        },
+      ],
+    },
+  })),
   {
     files: ['**/*.html'],
     languageOptions: {
@@ -56,6 +86,6 @@ module.exports = tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.spec.ts'],
+    ignores: ['dist/', 'node_modules/', '**/*.spec.ts'],
   },
 );

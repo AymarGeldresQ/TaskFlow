@@ -2,7 +2,7 @@
 
 Team-based project management API — think Linear/Jira core, built to production-grade engineering standards.
 
-**Portfolio project** demonstrating full-stack engineering: Hexagonal Architecture, stateless JWT auth, real-integration tests, structured logging, and an Angular frontend (in progress).
+**Portfolio project** demonstrating full-stack engineering: Hexagonal Architecture, stateless JWT auth, real-integration tests, structured logging, and an Angular 21 frontend with Kanban board.
 
 ---
 
@@ -45,13 +45,14 @@ BACKLOG → TODO → IN_PROGRESS → IN_REVIEW → DONE
 | Micrometer + Prometheus | Metrics |
 | Checkstyle + SpotBugs | Code quality enforcement |
 
-### Frontend *(in progress)*
+### Frontend
 | | |
 |---|---|
-| Angular 17 | SPA framework (standalone components) |
-| Angular Material | UI component library |
-| TypeScript 5 (strict) | No `any` — ever |
-| Jest + Angular Testing Library | Unit + component tests |
+| Angular 21 | SPA framework (standalone components, signals) |
+| Angular Material 21 | UI component library (M3 theme) |
+| Angular CDK (drag-and-drop) | Kanban board DnD |
+| TypeScript 5.9 (strict) | No `any` — ever |
+| Vitest + Angular Testing Library | Unit + component tests (124 tests) |
 
 ### Infrastructure
 | | |
@@ -109,7 +110,7 @@ taskflow/
 │   ├── build.gradle.kts
 │   └── Dockerfile              Multi-stage (eclipse-temurin:21-alpine)
 │
-├── frontend/                   Angular 17 (in progress)
+├── frontend/                   Angular 21 (Kanban board, signals, 124 tests)
 │   └── Dockerfile              Multi-stage (nginx)
 │
 ├── infra/
@@ -138,7 +139,7 @@ taskflow/
 
 - Java 21 ([SDKMAN](https://sdkman.io): `sdk install java 21.0.7-zulu`)
 - Docker + Docker Compose (or [OrbStack](https://orbstack.dev) on macOS)
-- Node 20+ (frontend only)
+- Node 22+ (frontend only)
 
 ### Run the Backend Locally
 
@@ -357,7 +358,7 @@ See [`backend/src/main/resources/db/migration/V1__init_schema.sql`](backend/src/
 | 2 — Domain + Auth | ✅ Done | JWT auth cycle, 37 unit tests, integration tests |
 | 3 — Core API | ✅ Done | 72/72 integration tests passing, 25 endpoints |
 | 4 — Observability | ✅ Done | Micrometer gauge, MDC correlation ID, structured logging, k6 baseline, Checkstyle+SpotBugs clean |
-| 5 — Frontend | ⬜ Planned | Angular, Kanban board, JWT interceptor |
+| 5 — Frontend | ✅ Done | Angular 21, Kanban board, JWT interceptor, 124 tests |
 | 6 — Polish | ⬜ Planned | Final k6 run, README diagrams |
 
 ---

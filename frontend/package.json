@@ -10,7 +10,7 @@
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:ci": "ng test --run",
+    "test:ci": "ng test --watch=false",
     "lint": "eslint src --ext .ts,.html --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\""
@@ -43,6 +43,7 @@
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
+    "typescript-eslint": "^8.59.4",
     "vitest": "^4.0.8"
   }
 }

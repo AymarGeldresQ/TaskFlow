@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+// M3 theme bootstrap
+@include mat.core();
+
+$theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+  ),
+  typography: (
+    brand-family: 'Roboto, sans-serif',
+    bold-weight: 700,
+  ),
+));
+
+html {
+  @include mat.all-component-themes($theme);
+}
+
+// Global resets
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: Roboto, sans-serif; }
